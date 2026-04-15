@@ -10,7 +10,7 @@ import javax.swing.Timer;
  *
  * @author angprabar
  */
-public class Board extends javax.swing.JPanel {
+public class Board extends javax.swing.JPanel implements DrawSquareInterface{
     
     public static final int NUM_COL = 20;
     public static final int NUM_ROW = 20;
@@ -72,20 +72,21 @@ public class Board extends javax.swing.JPanel {
         setFocusable(true);
         addKeyListener(keyAdapter);
         
-        snake = new Snake();
+        snake = new Snake(this);
         timer = new Timer(DELTA_TIME, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 tick();
             }
         });
+        /*
         int specialTime (int) (Math.random() * (MAX_SPECIAL_TIME - MIN_SPECIAL_TIME)) + MIN_SPECIAL_TIME;
         specialTimer = new Timer (specialTime, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 specialFood = new SpecialFood();
             }
-        }
+        });*/
         initGame();
     }
 
@@ -97,9 +98,10 @@ public class Board extends javax.swing.JPanel {
         if (snake.canMove()) {
             snake.move();
         } else {
-            
+        
         }
         repaint();
+       
     }
     
     
@@ -107,11 +109,13 @@ public class Board extends javax.swing.JPanel {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         paintBorderBoard(g);
-        snake.paint(g);
+        if (snake != null) {
+            snake.paint(g);
+        }
         Toolkit.getDefaultToolkit().sync();
     }
     
-    private void paintBoarderBoard(Graphics g) {
+    private void paintBorderBoard(Graphics g) {
         
     }
     
@@ -123,11 +127,24 @@ public class Board extends javax.swing.JPanel {
         return getHeight() / NUM_ROW;
     }
     
-    private void drawSquare(Graphics g, int row, int col,
-            boolean isHead) {
+    public void drawSquare(Graphics g, int row, int col, NodeType nodeType) {
         int x = col * squareWidth();
         int y = row * squareHeight();
-        Color color = isHead ? new Color(204,102,102) : new Color(102,102,204);
+        Color color = null;
+        switch(nodeType) {
+            case HEAD:
+                color = Color.red;
+                break;
+            case BODY:
+                color = Color.blue;
+                break;
+            case FOOD:
+                color = Color.red;
+                break;
+            case SPECIAL_FOOD:
+                color = Color.yellow;
+                break;
+        }
         g.setColor(color);
         g.fillRect(x + 1, y + 1, squareWidth() - 2,
                 squareHeight() - 2);
