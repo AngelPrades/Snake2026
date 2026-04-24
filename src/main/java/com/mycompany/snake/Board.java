@@ -10,8 +10,8 @@ import javax.swing.Timer;
  *
  * @author angprabar
  */
-public class Board extends javax.swing.JPanel implements DrawSquareInterface{
-    
+public class Board extends javax.swing.JPanel implements DrawSquareInterface {
+
     public static final int NUM_COL = 20;
     public static final int NUM_ROW = 20;
     public static final int DELTA_TIME = 200;
@@ -19,38 +19,42 @@ public class Board extends javax.swing.JPanel implements DrawSquareInterface{
     private Timer timer;
     private MyKeyAdapter keyAdapter;
     private Food food;
-    
-    
+    private Food specialFood;
+    private Scoreboard scoreboard;
+
     class MyKeyAdapter extends KeyAdapter {
+
         private boolean paused = false;
+
         public boolean isPaused() {
             return paused;
         }
+
         public void setPaused(boolean paused) {
             this.paused = paused;
         }
-        
+
         @Override
         public void keyPressed(KeyEvent e) {
             switch (e.getKeyCode()) {
                 case KeyEvent.VK_LEFT:
                     if (snake.getDirection() != Direction.RIGHT) {
-                        snake.setDirection(Direction.LEFT);
+                        snake.changeDirection(Direction.LEFT);
                     }
                     break;
                 case KeyEvent.VK_RIGHT:
                     if (snake.getDirection() != Direction.LEFT) {
-                        snake.setDirection(Direction.RIGHT);
+                        snake.changeDirection(Direction.RIGHT);
                     }
                     break;
                 case KeyEvent.VK_UP:
                     if (snake.getDirection() != Direction.DOWN) {
-                        snake.setDirection(Direction.UP);
+                        snake.changeDirection(Direction.UP);
                     }
                     break;
                 case KeyEvent.VK_DOWN:
                     if (snake.getDirection() != Direction.UP) {
-                        snake.setDirection(Direction.DOWN);
+                        snake.changeDirection(Direction.DOWN);
                     }
                     break;
                 case KeyEvent.VK_SPACE:
@@ -71,7 +75,7 @@ public class Board extends javax.swing.JPanel implements DrawSquareInterface{
         keyAdapter = new MyKeyAdapter();
         setFocusable(true);
         addKeyListener(keyAdapter);
-        
+
         snake = new Snake(this);
         timer = new Timer(DELTA_TIME, new ActionListener() {
             @Override
@@ -91,20 +95,34 @@ public class Board extends javax.swing.JPanel implements DrawSquareInterface{
     }
 
     public void initGame() {
+        food = new Food(snake, this);
         timer.start();
+        scoreboard = new Scoreboard();
     }
-    
+
     public void tick() {
         if (snake.canMove()) {
             snake.move();
         } else {
-        
+            timer.stop();
         }
         repaint();
-       
+        if (snake.eats(food)) {
+            snake.grow(food.getNodesWhenEat());
+            food = new Food(snake, this);
+            scoreboard.addPoints(food.getPoints());
+        }
+        if (keyAdapter.isPaused()) {
+            return;
+        }
+        if (specialFood == null && Math.random() < 0.05) {
+            specialFood = new SpecialFood(snake, this);
+        }
+        if (specialFood != null && specialFood.hasToBeErased()) {
+            specialFood = null;
+        }
     }
-    
-    
+
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -112,13 +130,20 @@ public class Board extends javax.swing.JPanel implements DrawSquareInterface{
         if (snake != null) {
             snake.paint(g);
         }
+        if (food != null) {
+            food.paint(g, squareWidth(), squareHeight());
+        }
+        if (specialFood != null) {
+            specialFood.paint(g, squareWidth(), squareHeight());
+        }
         Toolkit.getDefaultToolkit().sync();
+        g.drawString("Score: " + scoreboard.getScore(), 10, 20);
     }
-    
+
     private void paintBorderBoard(Graphics g) {
-        
+
     }
-    
+
     private int squareWidth() {
         return getWidth() / NUM_COL;
     }
@@ -126,12 +151,12 @@ public class Board extends javax.swing.JPanel implements DrawSquareInterface{
     private int squareHeight() {
         return getHeight() / NUM_ROW;
     }
-    
+
     public void drawSquare(Graphics g, int row, int col, NodeType nodeType) {
         int x = col * squareWidth();
         int y = row * squareHeight();
         Color color = null;
-        switch(nodeType) {
+        switch (nodeType) {
             case HEAD:
                 color = Color.red;
                 break;
@@ -139,7 +164,7 @@ public class Board extends javax.swing.JPanel implements DrawSquareInterface{
                 color = Color.blue;
                 break;
             case FOOD:
-                color = Color.red;
+                color = Color.green;
                 break;
             case SPECIAL_FOOD:
                 color = Color.yellow;
@@ -158,7 +183,7 @@ public class Board extends javax.swing.JPanel implements DrawSquareInterface{
                 y + squareHeight() - 1,
                 x + squareWidth() - 1, y + 1);
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
