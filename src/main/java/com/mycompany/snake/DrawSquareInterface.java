@@ -10,5 +10,5 @@ import java.awt.Graphics;
  * @author angprabar
  */
 public interface DrawSquareInterface {
-    public void drawSquare(Graphics g, int row, int col, boolean Head);
+    public void drawSquare(Graphics g, int row, int col, NodeType nodeType);
 }
