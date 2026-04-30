@@ -1,111 +1,95 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.mycompany.snake;
 
 import java.awt.Graphics;
 import java.util.*;
 
-/**
- *
- * @author angprabar
- */
 public class Snake {
     private Direction direction;
     private List<Node> nodes;
     private DrawSquareInterface drawSquareInterface;
-    
-    public Snake() {
+    private int nodesToGrow = 0;
+
+    public Snake(DrawSquareInterface drawSquareInterface) {
+        this.drawSquareInterface = drawSquareInterface;
         nodes = new ArrayList<>();
         direction = Direction.RIGHT;
         int col = Board.NUM_COL / 2;
         int row = Board.NUM_ROW / 2;
-        for (int i = 0; i < 4; i++) {
-            Node node = new Node (row, col + i);
-            nodes.add(node);
+        for (int i = 3; i >= 0; i--) {
+            nodes.add(new Node(row, col - i));
         }
     }
-    
+
     public boolean eats(Food food) {
-        int row = nodes.getFirst().getRow();
-        int col = nodes.getFirst().getCol();
-        return (food.getRow() == row && food.getCol() == col);
+        return food.getRow() == nodes.get(0).getRow() && food.getCol() == nodes.get(0).getCol();
     }
-    
+
     public void grow(int n) {
-        nodesToGrow +=n;
+        nodesToGrow += n;
     }
-    
-    public boolean contains(Node node) {
+
+    public boolean contains(int row, int col) {
         for (Node n : nodes) {
-            if (node.getRow() == n.getRow() && node.getCol() == n.getCol()) {
+            if (n.getRow() == row && n.getCol() == col) return true;
+        }
+        return false;
+    }
+
+    public boolean contains(Node node) {
+        return contains(node.getRow(), node.getCol());
+    }
+
+    public Direction getDirection() { return direction; }
+
+    public void changeDirection(Direction direction) {
+        this.direction = direction;
+    }
+
+    public boolean hitsItself() {
+        Node head = nodes.get(0);
+        for (int i = 1; i < nodes.size(); i++) {
+            if (nodes.get(i).getRow() == head.getRow() && nodes.get(i).getCol() == head.getCol()) {
                 return true;
             }
         }
         return false;
     }
-  
-    public Direction getDirection() {
-        return direction;
-    }
-    
-    public Direction setDirection(Direction direction) {
-        this.direction = direction;
-    }
-    
-    public void changeDirection(Direction direction) {
-        this.direction = direction;
-    }
-    
+
     public void paint(Graphics g) {
-        boolean first = true;
-        for (Node node : nodes ) {
-            drawSquareInterface.drawSquare(g, node.getRow(), node.getCol(), first);
-            if (first) {
-                first = false;
-            }
+        for (int i = 0; i < nodes.size(); i++) {
+            drawSquareInterface.drawSquare(g, nodes.get(i).getRow(), nodes.get(i).getCol(),
+                    i == 0 ? NodeType.HEAD : NodeType.BODY);
         }
     }
-    
+
     public boolean canMove() {
+        Node head = nodes.get(0);
         switch (direction) {
-            case UP:
-                return nodes.getFirst().getRow() - 1 >= 0;
-            case DOWN:
-                return nodes.getFirst().getRow() + 1 < Board.NUM_ROW;
-            case LEFT: 
-                return nodes.getFirst().getCol() - 1 >= 0;
-            case RIGHT:
-                return nodes.getFirst().getCol() + 1 < Board.NUM_COL;
-        } 
+            case UP:    return head.getRow() - 1 >= 0;
+            case DOWN:  return head.getRow() + 1 < Board.NUM_ROW;
+            case LEFT:  return head.getCol() - 1 >= 0;
+            case RIGHT: return head.getCol() + 1 < Board.NUM_COL;
+        }
         return true;
     }
-    
+
     public void move() {
-        int row = nodes.getFirst().getRow();
-        int col = nodes.getFirst().getCol();
-        Node node;
-        
+        Node head = nodes.get(0);
+        int row = head.getRow();
+        int col = head.getCol();
+        Node newHead;
         switch (direction) {
-            case UP:
-                node = new Node(row -1, col);
-                break;
-            case DOWN:
-                node = new Node(row +1, col);
-                break;
-            case LEFT:
-                node = new Node(row, col - 1);
-                break;
-            case RIGHT:
-                node = new Node(row, col + 1);
-                break;
+            case UP:    newHead = new Node(row - 1, col); break;
+            case DOWN:  newHead = new Node(row + 1, col); break;
+            case LEFT:  newHead = new Node(row, col - 1); break;
+            case RIGHT: newHead = new Node(row, col + 1); break;
+            default:    newHead = new Node(row, col + 1);
         }
-        nodes.addFirst(node);
+        nodes.add(0, newHead);
         if (nodesToGrow == 0) {
-            nodes.removeLast();
+            nodes.remove(nodes.size() - 1);
         } else {
-            nodesToGrow --;
+            nodesToGrow--;
         }
     }
 }
